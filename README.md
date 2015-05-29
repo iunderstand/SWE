@@ -15,6 +15,8 @@ The SWE application include
 * Synonym Selection
 
 Quan Liu
+
 E-mail: quanliu@mail.ustc.edu.cn
+
 http://home.ustc.edu.cn/~quanliu/
 
