@@ -1164,9 +1164,12 @@ void *TrainModelThread(void *id) {
     } 
 	else 
 	{ 
-	  /////////////////////////////////
-	  ///  Add semantic constraint  ///
-	  /////////////////////////////////
+      ///////////   SWE_Train_v2
+	  // Add constraint for the central word. No shuffle for the Skip-gram model. 
+	    
+		/////////////////////////////////
+	    ///  Add semantic constraint  ///
+	    /////////////////////////////////
 		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
 		{
 			SemWE_QsemDerive_Cosine(word, derive_distEu);												
@@ -1191,21 +1194,21 @@ void *TrainModelThread(void *id) {
         last_word = sen[c];
         if (last_word == -1) continue;
         
-		//l1 = last_word * layer1_size;
-		l1 = word * layer1_size;
+		l1 = last_word * layer1_size;
+		//l1 = word * layer1_size;
         
 		for (c = 0; c < layer1_size; c++) neu1e[c] = 0;
         				
         // NEGATIVE SAMPLING
         if (negative > 0) for (d = 0; d < negative + 1; d++) {
           if (d == 0) {
-            target = last_word;
+            target = word;
             label = 1;
           } else {
             next_random = next_random * (unsigned long long)25214903917 + 11;
             target = table[(next_random >> 16) % table_size];
             if (target == 0) target = next_random % (vocab_size - 1) + 1;
-            if (target == last_word) continue;
+            if (target == word) continue;
             label = 0;
           }
           l2 = target * layer1_size;

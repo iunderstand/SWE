@@ -1164,9 +1164,12 @@ void *TrainModelThread(void *id) {
     } 
 	else 
 	{ 
-	  /////////////////////////////////
-	  ///  Add semantic constraint  ///
-	  /////////////////////////////////
+	  ///////////   SWE_Train_v2
+	  // Add constraint for the central word. Shuffle for the Skip-gram model. 
+
+	    /////////////////////////////////
+	    ///  Add semantic constraint  ///
+	    /////////////////////////////////
 		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
 		{
 			SemWE_QsemDerive_Cosine(word, derive_distEu);												
