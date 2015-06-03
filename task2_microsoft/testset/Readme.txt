@@ -1,4 +1,13 @@
 
+
+## Semantic Word Embedding (SWE) ##
+
+## Quan Liu, University of Science and Technology of China
+
+## ACL 2015 long paper: Learning Semantic Word Embeddings based on Ordinal Knowledge Constraints
+
+## Sentence Completion Task
+
 For using this dataset, please cite the source:
 
 >> paper
