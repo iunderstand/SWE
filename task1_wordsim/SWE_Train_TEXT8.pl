@@ -14,7 +14,7 @@ use File::Path;
 # For demo on word similarity and synonym selection task.
 # Larger corpora are encourged to employ for SWE training.
 
-my $model_tool   = "../bin/SemWE_Train";
+my $model_tool   = "../bin/SWE_Train";
 
 ## Train files
 my $train_data   = "../corpora/TEXT8";
@@ -88,7 +88,7 @@ foreach my $semantic_flag (@semantic_flag) {
 				" -iter $iter_times";
 				" -delta-right $delta_right";
 					
-	#		system("$train_cmd");
-			system("$train_cmd >$save_runlog");
+			system("$train_cmd");
+			#system("$train_cmd >$save_runlog");
 	}}}}}
 }
