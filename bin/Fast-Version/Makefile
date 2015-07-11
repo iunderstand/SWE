@@ -1,6 +1,6 @@
 
 CC = g++
-CFLAGS = -lm -pthread -O3 -march=native -Wall -funroll-loops -Wno-unused-result 
+CFLAGS = -lm -pthread -O3 -march=native -Wall -funroll-loops -Wno-unused-result -I/opt/intel/mkl/include -L/opt/intel/mkl/lib/intel64 -L/opt/intel/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lmkl_core
 
 all: SWE_Train SWE_Test_SentComplete SWE_Test_WordSim SWE_Test_SynSel SWE_Train_v1 SWE_Train_v2 SWE_Train_v3
 

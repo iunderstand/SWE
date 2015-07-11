@@ -1,7 +1,9 @@
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
 //  You may obtain a copy of the License at
+//
 //      http://www.apache.org/licenses/LICENSE-2.0
+//
 //  Unless required by applicable law or agreed to in writing, software
 //  distributed under the License is distributed on an "AS IS" BASIS,
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +19,9 @@
 //       http://home.ustc.edu.cn/~quanliu/     //
 //=============================================//
 
-// Semantic Word Embedding Main Code
-// Modified from Google Word2Vec toolkit.
-// For demo running, we use text8 from http://mattmahoney.net/dc/text8.zip for experiments.
-// It may take just several minutes to finish the model training process.
+// SWE for Sentence Completion task.
+// Modified from the word2vec toolkit.
+// SemWE_Test_SentComplete.c
 
 //=== Here is the orginal word2vec license ===//
 //  Copyright 2013 Google Inc. All Rights Reserved.
@@ -35,10 +36,9 @@
 //  limitations under the License.
 
 
-
 #define ON_LINUX
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,10 +77,12 @@ struct vocab_word {
   char *word, *code, codelen;
 };
 
+char embeded_file[FILE_LENGTH], predict_file[FILE_LENGTH];
+
 char train_file[FILE_LENGTH], output_file[FILE_LENGTH];
 char save_vocab_file[FILE_LENGTH], read_vocab_file[FILE_LENGTH];
 struct vocab_word *vocab;
-int binary = 0, cbow = 0, debug_mode = 2, window = 5, min_count = 5, num_threads = 12, min_reduce = 1;
+int binary = 0, cbow = 1, debug_mode = 2, window = 5, min_count = 5, num_threads = 12, min_reduce = 1;
 int *vocab_hash;
 long long vocab_max_size = 1000, vocab_size = 0, layer1_size = 100;
 long long train_words = 0, word_count_actual = 0, iter = 5, file_size = 0, classes = 0;
@@ -91,6 +93,10 @@ clock_t start;
 int hs = 0, negative = 5;
 const int table_size = 1e8;
 int *table;
+
+// Microsoft file
+char MSRSC_input[FILE_LENGTH];
+char MSRSC_output[FILE_LENGTH];
 
 
 // Quan Liu
@@ -124,6 +130,7 @@ struct TypeQbaseVal
 	double log10_prob;
 	long long token_num;
 	real QbaseVal;
+	//real perplexity; // ppl = exp10( -log10(p) / wordNum) ?
 };
 
 real *zero_vector;
@@ -136,8 +143,8 @@ struct tm *endRunTime;
 char semwe_inequation_file[FILE_LENGTH];
 char semwe_inequation_fileCV[FILE_LENGTH];
 real semwe_add_time = 0.0;
-real semwe_inter_coeff = 0.1; // 0.1*sema1c + 0.9*baseline
-real semwe_weight_decay  = 0.0; // weight decay to prevent overfitting
+real semwe_inter_coeff = 0.005; // 0.1*sema1c + 0.9*baseline
+real semwe_weight_decay  = 0.0; // 2014/09/24 weight decay to prevent overfitting
 real semwe_hinge_margin = 0.0; // Hinge function low bound, f(x) = max(low_bound, x)
 
 int delta_left = 1;
@@ -170,7 +177,7 @@ real SemWE_VectorNorm(real *input_vector);
 void SemWE_VectorMinus(real *minus_res, real *vec_a, real *vec_b);
 real SemWE_CalcCosine(int index_A, int index_B);
 
-real SemWE_DeriveHinge(real key_value); 
+real SemWE_DeriveHinge(real key_value); // 2014/09/30
 real SemWE_CalcuHinge(real key_value);
 void SemWE_QsemDerive_Cosine(int word_index, real* derive_distEu);
 struct TypeQsemVal SemWE_Qsem_Cosine_InSet();
@@ -234,10 +241,11 @@ void SemWE_QsemDerive_Cosine(int word_index, real* derive_distEu)
 
 		ABCD_Sigmoid   = SemWE_CalcuHinge(CD_minus_AB);
 		derive_Sigmoid = SemWE_DeriveHinge(ABCD_Sigmoid);
-				
+		
+		//printf("gap=%f norm=%f derive=%f\n", CD_minus_AB, ABCD_Sigmoid, derive_Sigmoid);
 		if (derive_Sigmoid != 0.0)
-		{		
-			// Zero
+		{				
+			// Quan Liu, September 28, 2014. must add this!!!
 			SemWE_VectorCopy(derive_wordAB, zero_vector);
 			SemWE_VectorCopy(derive_wordCD, zero_vector);		
 			
@@ -254,12 +262,13 @@ void SemWE_QsemDerive_Cosine(int word_index, real* derive_distEu)
 			if (word_index == index_C){
 				SemWE_VectorCopy(derive_wordCD, &syn0[index_D*layer1_size]);			
 				SemWE_VectorScale(derive_wordCD, (1.0/(norm_C*norm_D)));					
-				SemWE_VectorLinear(derive_wordCD, &syn0[index_C*layer1_size], (-1*dist_CD/(norm_C*norm_C)));				
+				SemWE_VectorLinear(derive_wordCD, &syn0[index_C*layer1_size], (-1*dist_CD/(norm_C*norm_C)));
+				
 			} 
 			else if (word_index == index_D){
 				SemWE_VectorCopy(derive_wordCD, &syn0[index_C*layer1_size]);			
 				SemWE_VectorScale(derive_wordCD, (1.0/(norm_C*norm_D)));					
-				SemWE_VectorLinear(derive_wordCD, &syn0[index_D*layer1_size], (-1*dist_CD/(norm_D*norm_D)));				
+				SemWE_VectorLinear(derive_wordCD, &syn0[index_D*layer1_size], (-1*dist_CD/(norm_D*norm_D)));
 			}
 			///
 			SemWE_VectorLinear(derive_wordCD, derive_wordAB, -1.0);
@@ -390,14 +399,13 @@ real SemWE_DeriveHinge(real key_value)
 {	
 	real core_derive = 0.0;
 	if (key_value > 0){
-		core_derive = 1;		
+		core_derive = 1;
 	}
 	else{
 		core_derive = 0;
 	}
 	return core_derive;
 }
-//
 //
 real SemWE_VectorDot(real *vec_a, real *vec_b)
 {
@@ -720,7 +728,6 @@ void SemWE_LoadInEquation_CVSet(char *inequation_file)
 	fclose(fKNOW);  
 	printf("--- Finish reading the CV Knowledge Database\n");
 }
-////
 void SemWE_AddToKnowDB_CVSet(int word_index, long long eleID)
 { 
 	int kdb_num = 0;
@@ -1109,33 +1116,34 @@ void *TrainModelThread(void *id) {
     if (word_count - last_word_count > 10000) {
       word_count_actual += word_count - last_word_count;
       last_word_count = word_count;
-	  	  
-	  run_process = word_count_actual / (real)(iter * train_words + 1) * 100;	  		
+	  ///
+	  run_process = word_count_actual / (real)(train_words + 1) * 100;
+	  		
       alpha = starting_alpha * (1 - word_count_actual / (real)(iter * train_words + 1));
       if (alpha < starting_alpha * 0.0001) alpha = starting_alpha * 0.0001;
     }
 	
 	//////////////////////////
 	if (word_count - last_word_count2 > CVTEST_TIME) {	// 1 million			
-		last_word_count2 = word_count;
-					
-		// InSet
-		tmp_QsemValue = SemWE_Qsem_Cosine_InSet();
-		KnowDB_QsemVal.Qsem_total = tmp_QsemValue.Qsem_total;			
-		KnowDB_QsemVal.SatisfyNum = tmp_QsemValue.SatisfyNum;
-		KnowDB_QsemVal.SatisfyRate = tmp_QsemValue.SatisfyRate;		
-		// CVSet
-		tmp_QsemValueCV = SemWE_Qsem_Cosine_CVSet();
-		KnowDB_QsemVal_CV.Qsem_total = tmp_QsemValueCV.Qsem_total;			
-		KnowDB_QsemVal_CV.SatisfyNum = tmp_QsemValueCV.SatisfyNum;
-		KnowDB_QsemVal_CV.SatisfyRate = tmp_QsemValueCV.SatisfyRate;	
-		////printf("--- WordRun: %lld  Qsem: %f\n", word_count_actual, KnowDB_QsemVal.Qsem_total);
-		
-		printf("--- Alpha: %f  Progress: %.4f%%  Thread: %lld  ThreadCount: %lld  Train_Qsem: %.4f  Train_SatisfyRate: %.4f  Valid_Qsem: %.4f  Valid_SatisfyRate: %.4f\n", 
-		alpha, run_process, threadID,
-		word_count, KnowDB_QsemVal.Qsem_total, KnowDB_QsemVal.SatisfyRate, KnowDB_QsemVal_CV.Qsem_total, KnowDB_QsemVal_CV.SatisfyRate);
-		
-	}
+			last_word_count2 = word_count;
+						
+			// InSet
+			tmp_QsemValue = SemWE_Qsem_Cosine_InSet();
+			KnowDB_QsemVal.Qsem_total = tmp_QsemValue.Qsem_total;			
+			KnowDB_QsemVal.SatisfyNum = tmp_QsemValue.SatisfyNum;
+			KnowDB_QsemVal.SatisfyRate = tmp_QsemValue.SatisfyRate;		
+			// CVSet
+			tmp_QsemValueCV = SemWE_Qsem_Cosine_CVSet();
+			KnowDB_QsemVal_CV.Qsem_total = tmp_QsemValueCV.Qsem_total;			
+			KnowDB_QsemVal_CV.SatisfyNum = tmp_QsemValueCV.SatisfyNum;
+			KnowDB_QsemVal_CV.SatisfyRate = tmp_QsemValueCV.SatisfyRate;	
+			////printf("--- WordRun: %lld  Qsem: %f\n", word_count_actual, KnowDB_QsemVal.Qsem_total);
+			
+			printf("--- Alpha: %f  Progress: %.4f%%  Thread: %lld  ThreadCount: %lld  Train_Qsem: %.4f  Train_SatisfyRate: %.4f  Valid_Qsem: %.4f  Valid_SatisfyRate: %.4f\n", 
+			alpha, run_process, threadID,
+			word_count, KnowDB_QsemVal.Qsem_total, KnowDB_QsemVal.SatisfyRate, KnowDB_QsemVal_CV.Qsem_total, KnowDB_QsemVal_CV.SatisfyRate);
+			
+		}
 
     if (sentence_length == 0) {
       while (1) {
@@ -1235,13 +1243,10 @@ void *TrainModelThread(void *id) {
     } 
 	else 
 	{ 
-	  ///////////   SWE_Train_v2
-	  // Add constraint for the central word. Shuffle for the Skip-gram model. 
-
-	    /////////////////////////////////
-	    ///  Add semantic constraint  ///
-	    /////////////////////////////////
-		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
+	  /////////////////////////////////
+	  // Add semantic constraint !!//
+	  /////////////////////////////////
+	  if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
 		{
 			SemWE_QsemDerive_Cosine(word, derive_distEu);												
 			
@@ -1316,89 +1321,239 @@ void *TrainModelThread(void *id) {
 #endif
 }
 
+
+//// Core function////
+void MicrosoftCompletion() 
+{
+  long long a, b, d, cw, word, last_word, sentence_length = 0, sentence_position = 0;
+  long long word_count = 0, last_word_count = 0, sen[MAX_SENTENCE_LENGTH + 1];
+  long long l1, l2, c, target, label, local_iter = iter;
+  
+  //////
+  int vocab_idx = 0;
+  int nRow = vocab_size;
+  int nCol = layer1_size;
+  int incx = 1;
+  int incy = 1;
+  int lda = nCol;
+  float alpha = 1.0;
+  float beta = 0.0;  
+  float softmax_prob = 0.0;
+  float softmax_sum = 0.0;
+  float word_prior = 0.0; // prior probability, unigram occurrence.
+  int test_num = 0;
+	  
+  real *softmax_fenmu = (real*)malloc(vocab_size*sizeof(real));
+  
+  ///
+  real f;  
+  real sent_sigmoid = 0.0;  
+  real sent_softmax = 0.0; // word prob calculation
+  real sent_cosine  = 0.0; // cosine similarity sum up!
+  real veclen_A = 0.0;
+  real veclen_B = 0.0;
+  real cosine_sim = 0.0;
+  char word_str[MAX_STRING];
+  char outfile_softmax[FILE_LENGTH];
+  char outfile_cosine[FILE_LENGTH];
+  sprintf(outfile_softmax, "%s.softmax", MSRSC_output);
+  sprintf(outfile_cosine, "%s.cosine", MSRSC_output);
+  
+  for (a = 0; a < vocab_size; a++) {
+	  softmax_fenmu[a] = 0.0;
+  }
+
+  FILE *fi = fopen(MSRSC_input, "rb");
+  FILE *fo = fopen(MSRSC_output, "wb");	
+  FILE *fc = fopen(outfile_cosine, "wb");
+  
+  printf("--- Word Occurrence Prob Estimation By Word Embedding\n");
+  printf("--- Application: a)N-Best-Rescore; b)Sentence-Completion\n");
+  printf("--- source file: %s\n", MSRSC_input);
+  printf("--- output res1: sigmoid, %s\n", MSRSC_output);
+	//printf("--- output res2: softmax, %s\n", outfile_softmax);
+  printf("--- output res3: cosine, %s\n", outfile_cosine);
+  
+  while (1) {    
+    if (sentence_length == 0) {
+	  
+	  test_num++;
+      if (test_num % 500 == 0)
+      {
+		  printf("--- current test question num: %d\n", test_num);
+      }
+      ///
+      while (1) {
+        		
+		ReadWord(word_str, fi);
+		if (feof(fi)) break;
+		word = SearchVocab(word_str);
+		
+		if (word != 0){
+			fprintf(fo, "%s ", word_str);
+			//fprintf(fn, "%s ", word_str);
+			fprintf(fc, "%s ", word_str);
+		}
+		
+        if (feof(fi)) break;
+        if (word == -1) continue;
+        		
+        if (word == 0) break;
+        // The subsampling randomly discards frequent words while keeping the ranking same
+        /*if (sample > 0) {
+          real ran = (sqrt(vocab[word].cn / (sample * train_words)) + 1) * (sample * train_words) / vocab[word].cn;
+          next_random = next_random * (unsigned long long)25214903917 + 11;
+          if (ran < (next_random & 0xFFFF) / (real)65536) continue;
+        }*/
+        sen[sentence_length] = word;
+        sentence_length++;
+        if (sentence_length >= MAX_SENTENCE_LENGTH) break;
+      }
+      sentence_position = 0;
+    }
+    if (feof(fi))  break;
+	
+	sent_sigmoid = 0.0;
+	sent_softmax = 0.0;
+    sent_cosine  = 0.0;
+	word = sen[sentence_position];
+    if (word == -1) continue;
+	
+	// word prior information
+	word_prior = 1.0*vocab[word].cn / train_words;
+	//printf("-- word: %s, prior: %d, %f, %f\n", vocab[word].word, vocab[word].cn, word_prior, log(word_prior));
+	veclen_A = 0.0;
+	for (c = 0; c < layer1_size; c++){
+		l1 = word * layer1_size;
+		veclen_A += pow(syn0[c + l1], 2);
+	}
+	veclen_A = sqrt(veclen_A);
+	
+	for (a = 1; a < sentence_length; a++)
+	{
+		last_word = sen[a];
+		if (last_word == -1) continue;
+		
+		l1 = word * layer1_size;	
+		l2 = last_word * layer1_size;
+				
+		f = 0;
+		veclen_B = 0.0;
+		cosine_sim = 0.0;
+		for (c = 0; c < layer1_size; c++)
+		{
+			f += syn0[c + l1] * syn1neg[c + l2];			
+			cosine_sim += syn0[c + l1] * syn0[c + l2];
+			veclen_B += pow(syn0[c + l2], 2);
+		}
+		
+		// Co-ocurrence probability (association)
+		sent_sigmoid += (1.0/(1.0+exp(-1.0*f)));
+		
+		veclen_B = sqrt(veclen_B);
+		if (veclen_B > 0.0 && veclen_A > 0.0)
+		{
+			cosine_sim /= (veclen_A * veclen_B);
+			sent_cosine += cosine_sim;
+		}			
+	}	
+	
+	// print output
+	fprintf(fo, "%f\n", sent_sigmoid);
+	fprintf(fc, "%f\n", sent_cosine);
+	sentence_length = 0;
+    continue;
+  }
+  fclose(fi);
+  fclose(fo);
+  //fclose(fn);
+  fclose(fc);
+  free(softmax_fenmu);
+  printf("--- Completion Finished!\n");
+}
+
+
 void TrainModel() {
   long a, b, c, d;
-  FILE *fo;
-
-  char predict_file[2048];
-
-  struct TypeQsemVal tmp_QsemValue;
-
-  //pthread_t *pt = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
-#ifdef ON_LINUX
-  pthread_t *pt = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
-#endif
-#ifdef ON_WINDOWS
-  HANDLE *pt = (HANDLE *)malloc(num_threads * sizeof(HANDLE));	 
-#endif
-
-  runTimer = time(NULL);
-  begRunTime = localtime(&runTimer);
-  printf(">> Training Starting @Time: %s\n", asctime(begRunTime));
-
-  printf("Starting training using file %s\n", train_file);
-  starting_alpha = alpha;
-  if (read_vocab_file[0] != 0) ReadVocab(); else LearnVocabFromTrainFile();
-  if (save_vocab_file[0] != 0) SaveVocab();
+  FILE *fIN;
+	
+  printf("--- step0: read vocabulary and init network...");
+  ReadVocab();
+  //if (read_vocab_file[0] != 0) ReadVocab(); else LearnVocabFromTrainFile();
+  //if (save_vocab_file[0] != 0) SaveVocab();
   if (output_file[0] == 0) return;
   InitNet();
   if (negative > 0) InitUnigramTable();
-  start = clock();
+  printf("done\n");
   
-    ////////////////////////////////////////
-	printf(">>> Load Training Word Knowledge from file %s\n", semwe_inequation_file);
-	SemWE_LoadInEquation_InSet(semwe_inequation_file);
-	printf(">>> Load CV Test Word Knowledge from file %s\n", semwe_inequation_fileCV);	
-	SemWE_LoadInEquation_CVSet(semwe_inequation_fileCV);
-	
-    tmp_QsemValue = SemWE_Qsem_Cosine_InSet();
-	KnowDB_QsemVal.Qsem_total = tmp_QsemValue.Qsem_total;
-	tmp_QsemValue = SemWE_Qsem_Cosine_CVSet();
-	KnowDB_QsemVal_CV.Qsem_total = tmp_QsemValue.Qsem_total;
-	printf("--- Alpha: %f  Progress: %.2f%%  WordCount: %lld  Train_Qsem: %.4f  Train_SatisfyRate: %.4f  Valid_Qsem: %.4f  Valid_SatisfyRate: %.4f\n", alpha, 0.0, word_count_actual, KnowDB_QsemVal.Qsem_total, KnowDB_QsemVal.SatisfyRate, KnowDB_QsemVal_CV.Qsem_total, KnowDB_QsemVal_CV.SatisfyRate);
-
-  //for (a = 0; a < num_threads; a++) pthread_create(&pt[a], NULL, TrainModelThread, (void *)a);
-  //for (a = 0; a < num_threads; a++) pthread_join(pt[a], NULL);
-#ifdef ON_LINUX
-  for (a = 0; a < num_threads; a++) pthread_create(&pt[a], NULL, TrainModelThread, (void *)a);
-  for (a = 0; a < num_threads; a++) pthread_join(pt[a], NULL);
-#endif
-#ifdef ON_WINDOWS
-  for (a = 0; a < num_threads; a++) pt[a] = (HANDLE)_beginthreadex(NULL, 0, TrainModelThread, (void*)a, 0, NULL);
-  WaitForMultipleObjects(num_threads, pt, TRUE, INFINITE);
-#endif
-
-  endTimer = time(NULL);
-  endRunTime = localtime(&endTimer);
-  printf(">> Training Finished @Time: %s\n", asctime(endRunTime));
-
-  fo = fopen(output_file, "wb");
-  //if (classes == 0) 
-  {
-    // Save the word vectors
-    fprintf(fo, "%lld %lld\n", vocab_size, layer1_size);
-    for (a = 0; a < vocab_size; a++) {
-      fprintf(fo, "%s ", vocab[a].word);
-      if (binary) for (b = 0; b < layer1_size; b++) fwrite(&syn0[a * layer1_size + b], sizeof(real), 1, fo);
-      else for (b = 0; b < layer1_size; b++) fprintf(fo, "%lf ", syn0[a * layer1_size + b]);
-      fprintf(fo, "\n");
-    }
-  }
-  fclose(fo);
-
-  // predict
-  sprintf(predict_file, "%s.predict", output_file);
-  fo = fopen(predict_file, "wb");
-	{
-		fprintf(fo, "%lld %d\n", vocab_size, layer1_size);
-		for (a = 0; a < vocab_size; a++) {
-			fprintf(fo, "%s ", vocab[a].word);
-			if (binary) for (b = 0; b < layer1_size; b++) fwrite(&syn1neg[a * layer1_size + b], sizeof(real), 1, fo);
-			else for (b = 0; b < layer1_size; b++) fprintf(fo, "%lf ", syn1neg[a * layer1_size + b]);
-			fprintf(fo, "\n");
+  /////////////////////////
+  printf("--- step1: loading word embedding model...");
+  long long size_1, size_2;
+  char tmp_word[1024];
+  real tmp_value = 0.0;
+  
+  fIN = fopen(embeded_file, "r");
+  fscanf(fIN, "%lld%lld", &size_1, &size_2);
+  printf("load embedding: vocab_size=%lld, embeded_dim=%lld ...", size_1, size_2);
+	if (size_1 != vocab_size) {
+		printf("You are loading a word embedding with different size (differ vocab: %lld %lld)\n", size_1, vocab_size);
+		exit(1);
+	}
+	if (size_2 != layer1_size) {
+		printf("You are loading a word embedding with different size (differ embed: %lld %lld)\n", size_2, layer1_size);
+		exit(1);
+	}
+	for (a = 0; a < vocab_size; a++) {
+		fscanf(fIN, "%s", tmp_word);	
+		if (strcmp(tmp_word, vocab[a].word) != 0)
+		{
+			printf("!!!error, word mismatch\n");
+			exit(1);
 		}
-	}			
-	fclose(fo);
+		for (b = 0; b < layer1_size; b++) {
+			fscanf(fIN, "%f", &tmp_value);				
+			syn0[a * layer1_size + b] = tmp_value;
+			//printf("%f ", syn0[a * layer1_size + b]);
+		}
+		//printf("\n");
+	}
+  fclose(fIN);
+  printf("done\n");
+
+  /////// predict
+  //sprintf(predict_file, "%s.predict", output_file);
+  fIN = fopen(predict_file, "r");
+	fscanf(fIN, "%lld%lld", &size_1, &size_2);
+	printf("load predict file: vocab_size=%lld, embeded_dim=%lld ...", size_1, size_2);
+	if (size_1 != vocab_size) {
+		printf("You are loading a word embedding with different size (differ vocab: %lld %lld)\n", size_1, vocab_size);
+		exit(1);
+	}
+	if (size_2 != layer1_size) {
+		printf("You are loading a word embedding with different size (differ embed: %lld %lld)\n", size_2, layer1_size);
+		exit(1);
+	}
+	for (a = 0; a < vocab_size; a++) {
+		fscanf(fIN, "%s", tmp_word);	
+		if (strcmp(tmp_word, vocab[a].word) != 0)
+		{
+			printf("!!!error, word mismatch\n");
+			exit(1);
+		}
+		for (b = 0; b < layer1_size; b++) {
+			fscanf(fIN, "%f", &tmp_value);				
+			syn1neg[a * layer1_size + b] = tmp_value;
+			//printf("%f ", syn0[a * layer1_size + b]);
+		}
+		//printf("\n");
+	}
+	fclose(fIN);
+  printf("done\n");
+  
+  /// Main work
+  printf("--- step2: Microsoft Sentence Completion liked Evaluation...");
+  MicrosoftCompletion();  
+  printf("done\n");
 }
 
 int ArgPos(char *str, int argc, char **argv) {
@@ -1418,8 +1573,7 @@ int main(int argc, char **argv) {
 	FILE *fTest= NULL;
 
 	if (argc == 1) {
-	printf("SWE: Semantic Word Emebdding Toolkit\n");
-	printf("Modified from Skip-gram word2vec toolkit\n\n");
+	printf("SWE toolkit: Test ASR Nbest / MSR Sentence Completion\n\n");
 	printf("Options:\n");
 	printf("Parameters for training:\n");
 	printf("\t-train <file>\n");
@@ -1456,7 +1610,7 @@ int main(int argc, char **argv) {
 	printf("\t-read-vocab <file>\n");
 	printf("\t\tThe vocabulary will be read from <file>, not constructed from the training data\n");
 	printf("\t-cbow <int>\n");
-	printf("\t\tUse the continuous bag of words model; default is 0 (if use 1, then SWE doesn't work)\n");
+	printf("\t\tUse the continuous bag of words model; default is 1 (use 0 for skip-gram model)\n");
 	
 	/// SWE Settings
 	printf("\nSWE parameter setting\n");
@@ -1477,9 +1631,9 @@ int main(int argc, char **argv) {
 	printf("\t-weight-decay <float>\n");
 	printf("\t\tSet weight decay coeffcient. default is 0\n");
 	
-	
+	///
 	printf("\nExamples:\n");
-	printf("./SWE_Train -train data.txt -output vec.txt -size 200 -window 5 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 0 -iter 3 -sem-train sem.train.txt -sem-valid sem.valid.txt -sem-coeff 0.1 -sem-hinge 0.0 -sem-addtime 0 -weight-decay 0 -delta-left 1 -delta-right 1\n\n");
+	printf("./SWE_InEquation -train data.txt -size 200 -window 5 -sample 1e-4 -negative 5 -hs 0 -binary 0 -cbow 0 -iter 3 -sem-train sem.train.txt -sem-valid sem.valid.txt -sem-coeff 0.1 -sem-hinge 0.0 -sem-addtime 0 -weight-decay 0 -delta-left 1 -delta-right 1 -sent-in test.sent.src -sent-out test.sent.out -load-embeded word.vector.txt -load-predict word.predict.txt\n\n");
 	return 0;
 	}
 	output_file[0] = 0;
@@ -1504,7 +1658,7 @@ int main(int argc, char **argv) {
 	if ((i = ArgPos((char *)"-min-count", argc, argv)) > 0) min_count = atoi(argv[i + 1]);
 	if ((i = ArgPos((char *)"-classes", argc, argv)) > 0) classes = atoi(argv[i + 1]);
 	
-	////// Quan Liu
+	//
 	if ((i = ArgPos((char *)"-sem-train", argc, argv)) > 0) strcpy(semwe_inequation_file, argv[i + 1]);
 	if ((i = ArgPos((char *)"-sem-valid", argc, argv)) > 0) strcpy(semwe_inequation_fileCV, argv[i + 1]);	
 	if ((i = ArgPos((char *)"-sem-coeff", argc, argv)) > 0) semwe_inter_coeff = atof(argv[i + 1]);
@@ -1515,16 +1669,23 @@ int main(int argc, char **argv) {
 	if ((i = ArgPos((char *)"-delta-left", argc, argv)) > 0) delta_left = atoi(argv[i + 1]);
 	if ((i = ArgPos((char *)"-delta-right", argc, argv)) > 0) delta_right = atoi(argv[i + 1]);
 		
-	printf("Semantic Word Embedding (SWE) Toolkit");
+	// Core
+	if ((i = ArgPos((char *)"-sent-in", argc, argv)) > 0) strcpy(MSRSC_input, argv[i + 1]);
+	if ((i = ArgPos((char *)"-sent-out", argc, argv)) > 0) strcpy(MSRSC_output, argv[i + 1]);
+	
+	if ((i = ArgPos((char *)"-load-embeded", argc, argv)) > 0) strcpy(embeded_file, argv[i + 1]);
+	if ((i = ArgPos((char *)"-load-predict", argc, argv)) > 0) strcpy(predict_file, argv[i + 1]);
+	
+	
+    printf("SWE Tool For: Microsoft Sentence Completion OR ASR N-Best Ranking Score Calculation\n");
+	printf("MODEL-Evaluation: Load Word Embedding Models and Testing\n");
 	printf("Train Setting embedding size: %d\n", layer1_size);
 	printf("Train Setting window size: %d\n", window);
 	printf("Train Setting sample value: %f\n", sample);	
 	printf("Train Setting negative num: %d\n", negative);
 	printf("Running Threads: %d\n", num_threads);
-	printf("Iteration Times: %d\n", iter);
-
-	printf("SemWE Qsem train file: %s\n", semwe_inequation_file);
-	printf("SemWE Qsem valid file: %s\n", semwe_inequation_fileCV);
+	printf("Iteration times: %d\n", iter);
+		
 	printf("SemWE Add Time(/%%): %f\n", semwe_add_time);
 	printf("SemWE Weight Decay: %f\n", semwe_weight_decay);
 	printf("SemWE Inter Coeff: %f\n", semwe_inter_coeff);	
@@ -1532,22 +1693,25 @@ int main(int argc, char **argv) {
 	printf("SemWE Inequation Delta Left: %d\n", delta_left);
 	printf("SemWE Inequation Delta Right: %d\n", delta_right);
 	
-	fTest = fopen(semwe_inequation_file, "r");
+	printf("MSR Sentence Completion type file input: %s\n", MSRSC_input);
+	printf("MSR Sentence Completion type file output: %s\n", MSRSC_output);
+	
+	fTest = fopen(embeded_file, "r");
 	if (fTest == NULL) {
-		printf("Error, can not find file %s\n", semwe_inequation_file);
+		printf("Error, can not find file %s\n", embeded_file);
 		exit(1);
 	}
 	fclose(fTest);
-	fTest = fopen(semwe_inequation_fileCV, "r");
+	fTest = fopen(predict_file, "r");
 	if (fTest == NULL) {
-		printf("Error, can not find file %s\n", semwe_inequation_fileCV);
+		printf("Error, can not find file %s\n", predict_file);
 		exit(1);
 	}
 	fclose(fTest);
 	
 	zero_vector  = (real*)malloc(layer1_size*sizeof(real));
 	for (i = 0; i < layer1_size; i++) zero_vector[i] = 0.0;
-
+	
 	//
 	vocab = (struct vocab_word *)calloc(vocab_max_size, sizeof(struct vocab_word));
 	vocab_hash = (int *)calloc(vocab_hash_size, sizeof(int));
@@ -1565,5 +1729,4 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
-
-//--------- END: Semantic Word Embedding Main code ----------//
+//-------------   SWE_Test_SentComplete.c  --------------//

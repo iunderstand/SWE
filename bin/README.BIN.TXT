@@ -61,5 +61,5 @@ Beyond the training tool, we also supply some evaluation tools for testing SWE m
 
 ## 3. Prerequisites
 
-To use this toolkit, the Intel Math Kernel Library is needed.
+You can choose to use the Fast Version of toolkit (the Intel Math Kernel Library is needed).
 

@@ -12,6 +12,8 @@
 // Using Intel MKL to make calculation faster.
 // SemWE_Test_WordSim.cpp
 
+//#define MKL_YES
+
 #include <iostream>
 #include <map>
 #include <vector>
@@ -21,7 +23,9 @@
 #include <time.h>
 #include <algorithm>
 
+#ifdef MKL_YES
 #include <mkl.h>
+#endif
 
 using namespace std;
 
@@ -36,39 +40,70 @@ typedef float real;
 
 real SemWE_VectorDot(real *vec_a, real *vec_b, int vec_size)
 {
+	int  i = 0;
 	int incx = 1;
 	int incy = 1;
 	real fastres = 0.0;
+	#ifdef MKL_YES
 	fastres = sdot(&vec_size, vec_a, &incx, vec_b, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		fastres += vec_a[i]*vec_b[i];
+	}
+	#endif	
 	return fastres;
 }
 void SemWE_VectorCopy(real *vec_a, real *vec_b, int vec_size)
 {
-	// vec_a = vec_b
-	int incx = 1;
-	int incy = 1;	
-	scopy(&vec_size, vec_b, &incx, vec_a, &incy);
-}
-// SemWE_VectorMinusFast: 
-void SemWE_VectorLinear(real *main_vector, real *scale_vector, real scale_coeff, int vec_size)
-{
-	// main_vector = main_vector + scale_coeff * scale_vector
+	int  i = 0;
 	int incx = 1;
 	int incy = 1;
+	#ifdef MKL_YES
+	scopy(&vec_size, vec_b, &incx, vec_a, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		vec_a[i] = vec_b[i];
+	}
+	#endif
+}
+void SemWE_VectorLinear(real *main_vector, real *scale_vector, real scale_coeff, int vec_size)
+{
+	int  i = 0;
+	int incx = 1;
+	int incy = 1;
+	#ifdef MKL_YES
 	saxpy(&vec_size, &scale_coeff, scale_vector, &incx, main_vector, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		main_vector[i] += scale_coeff * scale_vector[i];
+	}
+	#endif
 }
 void SemWE_VectorScale(real *input_vector, real scale_coeff, int vec_size)
 {
 	int i = 0;
 	int incx = 1;
+	#ifdef MKL_YES
 	sscal(&vec_size, &scale_coeff, input_vector, &incx);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		input_vector[i] = scale_coeff * input_vector[i];
+	}
+	#endif
 }
 real SemWE_VectorNorm(real *input_vector, int vec_size)
 {
-	int  i = 0;
+	int i = 0;
 	real norm_value = 0.0;
-	int  incx = 1;
+	int incx = 1;
+	#ifdef MKL_YES
 	norm_value = snrm2(&vec_size, input_vector, &incx);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		norm_value += (input_vector[i]*input_vector[i]);
+	}
+	norm_value = sqrt(norm_value);
+	#endif
 	return norm_value;
 }
 

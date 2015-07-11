@@ -38,7 +38,7 @@
 
 #define ON_LINUX
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -397,7 +397,6 @@ real SemWE_DeriveHinge(real key_value)
 	}
 	return core_derive;
 }
-//
 //
 real SemWE_VectorDot(real *vec_a, real *vec_b)
 {
@@ -1235,12 +1234,9 @@ void *TrainModelThread(void *id) {
     } 
 	else 
 	{ 
-	  ///////////   SWE_Train_v2
-	  // Add constraint for the central word. Shuffle for the Skip-gram model. 
-
-	    /////////////////////////////////
-	    ///  Add semantic constraint  ///
-	    /////////////////////////////////
+	  /////////////////////////////////
+	  ///  Add semantic constraint  ///
+	  /////////////////////////////////
 		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
 		{
 			SemWE_QsemDerive_Cosine(word, derive_distEu);												

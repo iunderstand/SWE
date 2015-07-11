@@ -12,7 +12,7 @@
 // Word Embedding for Synonym Selection task.
 // Using Intel MKL to make calculation faster
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <iostream>
 #include <map>

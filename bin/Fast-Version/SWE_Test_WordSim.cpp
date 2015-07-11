@@ -8,11 +8,11 @@
 //       http://home.ustc.edu.cn/~quanliu/     //
 //=============================================//
 
-// SemWE_Test_SynSel.cpp
-// Word Embedding for Synonym Selection task.
-// Using Intel MKL to make calculation faster
+// Word Embedding for Word Similarity task.
+// Using Intel MKL to make calculation faster.
+// SemWE_Test_WordSim.cpp
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <iostream>
 #include <map>
@@ -29,7 +29,6 @@
 
 using namespace std;
 
-//typedef map<string, vector<float>> WordEmbed;
 typedef map<string, int> WordMapper;
 struct WordSim{
 	int wordID;
@@ -132,7 +131,6 @@ real SemWE_CalcCosine(real *vec_a, real *vec_b, int vec_size)
 }	
 
 
-
 bool CompareCosine(WordSim a, WordSim b)
 {
 	return a.simRES>b.simRES;
@@ -148,7 +146,7 @@ map<string, int> wordSet;
 char word_embed[2048];
 char sim_result[2048];
 char word_pair[2048];
-int  candidate_num = 4; // euclidean
+string  distance_ID = "cosine"; // euclidean
 int threadNum = 1;
 int word_num = 0;
 int vect_dim = 0;
@@ -160,21 +158,22 @@ int main (int argc, char *argv[])
 {		
 	if (argc < 4)
 	{
-		printf("SemWE_Test_SynSel synonym_question word_embed synonym_result candidate_num\n");
-		printf("Primary Designed for the TOEFL Synonym Selection Task\n");
+		printf("SemWE_WordSim.exe word_pair word_embed sim_result distance_ID\n");
+		printf("distance_ID: cosine; euclidean\n");
 		exit(1);
 	}
 	
 	strcpy(word_pair, argv[1]);
 	strcpy(word_embed, argv[2]);
 	strcpy(sim_result, argv[3]);
-	candidate_num = atoi(argv[4]);
+	distance_ID = argv[4];
 				
 	char tmp_word[WORD_LEN];
 	float tmp_value = 0.0;
-	
-	printf(">> Synonym Selection on Word Embedding Model\n");
-	
+
+	printf(">> Word Similarity Calculation on Word Embedding Model\n");
+	printf("--- distance flag: %s\n", distance_ID.c_str());
+
 	FILE *fTEST = fopen(word_pair, "r");
 	if (fTEST == NULL)
 	{
@@ -188,12 +187,12 @@ int main (int argc, char *argv[])
 		exit(1);
 	}
 
-	printf("--- Load Word Embedding from: %s\n", word_embed);
+	printf(">> Load Word Embedding from: %s\n", word_embed);
 	FILE *fEMB = fopen(word_embed, "r");
 	fscanf(fEMB, "%d%d", &word_num, &vect_dim);
 	printf("--- word num: %d\n--- vec dimen: %d\n", word_num, vect_dim);
 	wordEmbed = (real*)malloc(sizeof(real)*word_num*vect_dim);
-	
+
 	for (int i = 0; i < word_num; i++)
 	{
 		fscanf(fEMB, "%s", tmp_word);		
@@ -212,11 +211,10 @@ int main (int argc, char *argv[])
 	fclose(fEMB);
 	printf("--- Load finish\n");
 				
-	//printf(">> Synonym Selection\n");
-	printf("--- Synonym question : %s\n", word_pair);
-	printf("--- Candidate num: %d\n", candidate_num);
-	printf("--- Word Embed: %s\n", word_embed);	
-	printf("--- Selection result: %s\n", sim_result);
+	printf(">> Calculate Word Similarity: %s\n", distance_ID.c_str());
+	printf("--- word pair : %s\n", word_pair);
+	printf("--- word embed: %s\n", word_embed);	
+	printf("--- calc result: %s\n", sim_result);
 	clock_t start = clock();
 	WordSim tmp_sim;
 	
@@ -225,51 +223,35 @@ int main (int argc, char *argv[])
 	
 	int all_num = 0;
 	int use_num = 0;
-	int cand_id = 0;
-	while (fscanf(fTEST, "%s", word_A) != EOF)
+	while (fscanf(fTEST, "%s%s", word_A, word_B) != EOF)
 	{
 		//printf("--- %s %s: ", word_A, word_B);
 		all_num++;
-		
-		fprintf(fRES, "%s\t", word_A);
-
-		float max_sim = -10000.0;
-		string sel_synword = "";
-		// candidate
-		for (cand_id = 0; cand_id < candidate_num; cand_id++)
+		float sim_AB = 0.0;
+		if (wordSet.find(word_A) == wordSet.end() || wordSet.find(word_B) == wordSet.end())
 		{
-			fscanf(fTEST, "%s", word_B);
-			if (cand_id == 0){
-				sel_synword = word_B;
-			}
-			float sim_AB = -100.0;
-
-			if (wordSet.find(word_A) == wordSet.end() || wordSet.find(word_B) == wordSet.end())
-			{
-				;
-			}
-			else{
-				int index_A = wordSet[word_A];
-				int index_B = wordSet[word_B];
-				
-				
-				sim_AB = SemWE_CalcCosine(&wordEmbed[index_A*vect_dim], &wordEmbed[index_B*vect_dim], vect_dim);
-				if (sim_AB > max_sim)
-				{
-					max_sim = sim_AB;
-					sel_synword = word_B;
-				}				
-			}	
-			fprintf(fRES, "%s(%.6f) ", word_B, sim_AB);
+			;
 		}
-		fprintf(fRES, "=>best: %s\n", sel_synword.c_str());
-		//fprintf(fRES, "%s\t%s", sel_synword.c_str());
+		else{
+			use_num++;
+			int index_A = wordSet[word_A];
+			int index_B = wordSet[word_B];
+			if (distance_ID == "cosine")
+			{
+				sim_AB = SemWE_CalcCosine(&wordEmbed[index_A*vect_dim], &wordEmbed[index_B*vect_dim], vect_dim);
+			}	
+			if (distance_ID == "euclidean")
+			{
+				sim_AB = SemWE_CalcEuclidean(&wordEmbed[index_A*vect_dim], &wordEmbed[index_B*vect_dim], vect_dim);				
+			}
+			fprintf(fRES, "%s %s %.6f\n", word_A, word_B, sim_AB);
+		}		
 	}
 	fclose(fRES);
 	fclose(fTEST);
 	//////////////////////////////////////////////////////////////////////////
 	double timeCost = (clock()-start)/CLOCKS_PER_SEC;		
-	//printf("--- calculate nums: %d (/%d)\n", use_num, all_num);
+	printf("--- calculate nums: %d (/%d)\n", use_num, all_num);
 	printf("--- elapsed time: %f\n", timeCost);		
 	//printf(">> Finish.\n");
 	
@@ -278,4 +260,4 @@ int main (int argc, char *argv[])
 }
 
 
-
+//----------  END: SemWE_Test_WordSim.cpp  ----------//

@@ -38,7 +38,7 @@
 
 #define ON_LINUX
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <stdio.h>
 #include <stdlib.h>

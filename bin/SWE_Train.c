@@ -38,13 +38,17 @@
 
 #define ON_LINUX
 
+//#define MKL_YES
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <time.h>
 
+#ifdef MKL_YES
 #include <mkl.h>
+#endif
 
 #ifdef ON_LINUX
 #include <pthread.h>
@@ -393,23 +397,50 @@ real SemWE_DeriveHinge(real key_value)
 	}
 	return core_derive;
 }
+//
 real SemWE_VectorDot(real *vec_a, real *vec_b)
 {
-	int incx = 1;
+	/*int incx = 1;
 	int incy = 1;
 	int size = layer1_size;
 	real fastres = 0.0;
 	fastres = sdot(&size, vec_a, &incx, vec_b, &incy);
 	return fastres;
+	*/
+	int  i = 0;
+	int incx = 1;
+	int incy = 1;
+	int vec_size = layer1_size;
+	real fastres = 0.0;
+	#ifdef MKL_YES
+	fastres = sdot(&vec_size, vec_a, &incx, vec_b, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		fastres += vec_a[i]*vec_b[i];
+	}
+	#endif	
+	return fastres;
 }
 void SemWE_VectorCopy(real *vec_a, real *vec_b)
 {
 	// vec_a = vec_b
-	int incx = 1;
+	/*int incx = 1;
 	int incy = 1;
 	int size = layer1_size;
 	//int i = 0;		
 	scopy(&size, vec_b, &incx, vec_a, &incy);
+	*/
+	int  i = 0;
+	int incx = 1;
+	int incy = 1;
+	int vec_size = layer1_size;
+	#ifdef MKL_YES
+	scopy(&vec_size, vec_b, &incx, vec_a, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		vec_a[i] = vec_b[i];
+	}
+	#endif
 }
 void SemWE_VectorMinus(real *minus_res, real *vec_a, real *vec_b)
 {
@@ -421,25 +452,64 @@ void SemWE_VectorMinus(real *minus_res, real *vec_a, real *vec_b)
 void SemWE_VectorLinear(real *main_vector, real *scale_vector, real scale_coeff)
 {
 	// main_vector = main_vector + scale_coeff * scale_vector
-	int incx = 1;
+	/*int incx = 1;
 	int incy = 1;
 	int size = layer1_size;
 	saxpy(&size, &scale_coeff, scale_vector, &incx, main_vector, &incy);
+	*/
+	int  i = 0;
+	int incx = 1;
+	int incy = 1;
+	int vec_size = layer1_size;
+	#ifdef MKL_YES
+	saxpy(&vec_size, &scale_coeff, scale_vector, &incx, main_vector, &incy);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		main_vector[i] += scale_coeff * scale_vector[i];
+	}
+	#endif
 }
 void SemWE_VectorScale(real *input_vector, real scale_coeff)
 {
-	int i = 0;
+	/*int i = 0;
 	int incx = 1;
 	int size = layer1_size;
 	sscal(&size, &scale_coeff, input_vector, &incx);
+	*/
+
+	int i = 0;
+	int incx = 1;
+	int vec_size = layer1_size;
+	#ifdef MKL_YES
+	sscal(&vec_size, &scale_coeff, input_vector, &incx);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		input_vector[i] = scale_coeff * input_vector[i];
+	}
+	#endif
 }
 real SemWE_VectorNorm(real *input_vector)
 {
-	int  i = 0;
+	/*int  i = 0;
 	real norm_value = 0.0;
 	int  incx = 1;
 	int size = layer1_size;
 	norm_value = snrm2(&size, input_vector, &incx);
+	return norm_value;
+	*/
+
+	int i = 0;
+	real norm_value = 0.0;
+	int incx = 1;
+	int vec_size = layer1_size;
+	#ifdef MKL_YES
+	norm_value = snrm2(&vec_size, input_vector, &incx);
+	#else
+	for (i = 0; i < vec_size; ++i){
+		norm_value += (input_vector[i]*input_vector[i]);
+	}
+	norm_value = sqrt(norm_value);
+	#endif
 	return norm_value;
 }
 real SemWE_CalcCosine(int index_A, int index_B)

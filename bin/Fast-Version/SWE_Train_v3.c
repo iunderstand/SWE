@@ -38,7 +38,7 @@
 
 #define ON_LINUX
 
-//#define MKL_YES
+#define MKL_YES
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -398,7 +398,6 @@ real SemWE_DeriveHinge(real key_value)
 	return core_derive;
 }
 //
-//
 real SemWE_VectorDot(real *vec_a, real *vec_b)
 {
 	/*int incx = 1;
@@ -525,7 +524,6 @@ real SemWE_CalcCosine(int index_A, int index_B)
 	//printf("cosine<%d %d>: %f\n", index_A, index_B, cosine_value);
 	return cosine_value;
 }
-
 
 //////////////////////////////////////////////
 // Load Knowledge InEquation
@@ -1234,28 +1232,9 @@ void *TrainModelThread(void *id) {
       }
     } 
 	else 
-	{ 
-	  ///////////   SWE_Train_v2
-	  // Add constraint for the central word. Shuffle for the Skip-gram model. 
-
-	    /////////////////////////////////
-	    ///  Add semantic constraint  ///
-	    /////////////////////////////////
-		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[word].KDB_nums >= 1))
-		{
-			SemWE_QsemDerive_Cosine(word, derive_distEu);												
-			
-			SemWE_VectorScale(derive_distEu, (-1.0*semwe_inter_coeff * alpha));
-			
-			// weight deacy
-			if (semwe_weight_decay > 0.0) 
-			{
-				SemWE_VectorCopy(vector_decay, &syn0[word * layer1_size]);
-				SemWE_VectorLinear(&syn0[word * layer1_size], vector_decay, (-1.0*alpha*semwe_weight_decay));
-			}
-			SemWE_VectorLinear(&syn0[word * layer1_size], derive_distEu, 1.0);
-		}
-	  
+	{ 	  	
+	  ///////////   SWE_Train_v3
+	  // Add constraint for the context word.
 	  //////////////////////////////////
 	  //train skip-gram	  
       for (a = b; a < window * 2 + 1 - b; a++) if (a != window) {
@@ -1265,21 +1244,23 @@ void *TrainModelThread(void *id) {
         last_word = sen[c];
         if (last_word == -1) continue;
         
-		//l1 = last_word * layer1_size;
-		l1 = word * layer1_size;
+		l1 = last_word * layer1_size;
+		//l1 = word * layer1_size;
         
 		for (c = 0; c < layer1_size; c++) neu1e[c] = 0;
         				
         // NEGATIVE SAMPLING
         if (negative > 0) for (d = 0; d < negative + 1; d++) {
           if (d == 0) {
-            target = last_word;
+            //target = last_word;
+			target = word;
             label = 1;
           } else {
             next_random = next_random * (unsigned long long)25214903917 + 11;
             target = table[(next_random >> 16) % table_size];
             if (target == 0) target = next_random % (vocab_size - 1) + 1;
-            if (target == last_word) continue;
+            //if (target == last_word) continue;
+			if (target == word) continue;
             label = 0;
           }
           l2 = target * layer1_size;
@@ -1293,6 +1274,24 @@ void *TrainModelThread(void *id) {
           for (c = 0; c < layer1_size; c++) syn1neg[c + l2] += g * syn0[c + l1];
         }
 		
+	    /////////////////////////////////
+	    ///  Add semantic constraint  ///
+	    /////////////////////////////////
+		if (semwe_inter_coeff > 0.0 && (run_process > semwe_add_time && KnowDB_TermKDB[last_word].KDB_nums >= 1))
+		{
+			SemWE_QsemDerive_Cosine(last_word, derive_distEu);												
+			
+			SemWE_VectorScale(derive_distEu, (-1.0*semwe_inter_coeff * alpha));
+			
+			// weight deacy
+			if (semwe_weight_decay > 0.0) 
+			{
+				SemWE_VectorCopy(vector_decay, &syn0[last_word * layer1_size]);
+				SemWE_VectorLinear(&syn0[last_word * layer1_size], vector_decay, (-1.0*alpha*semwe_weight_decay));
+			}
+			SemWE_VectorLinear(&syn0[last_word * layer1_size], derive_distEu, 1.0);
+		}
+
         // Learn weights input -> hidden
         for (c = 0; c < layer1_size; c++) syn0[c + l1] += neu1e[c];
       }
