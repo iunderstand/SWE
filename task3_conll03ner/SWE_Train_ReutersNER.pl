@@ -9,7 +9,7 @@ use File::Path;
 #       http://home.ustc.edu.cn/~quanliu/     #
 #=============================================#
 
-my $model_tool   = "../bin/SemWE_Train";
+my $model_tool   = "../bin/SWE_Train";
 
 ## Train files
 my $train_data   = "../corpora/Reuters";
@@ -82,7 +82,7 @@ foreach my $semantic_flag (@semantic_flag) {
 				" -iter $iter_times";
 				" -delta-right $delta_right";
 					
-	#		system("$train_cmd");
-			system("$train_cmd >$save_runlog");
+			system("$train_cmd");
+			#system("$train_cmd >$save_runlog");
 	}}}}}
 }
