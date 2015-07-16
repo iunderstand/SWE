@@ -1,0 +1,60 @@
+
+====== 
+--- 2015-05-28--08:19:56
+>>> Semantic: SA1, RunTimes: 1
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.hinge0.add0.decay0.l1.r1
+---accuracy: 31.8269230769231%
+
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.01.hinge0.add0.decay0.l1.r1
+---accuracy: 34.8076923076923%
+
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.05.hinge0.add0.decay0.l1.r1
+---accuracy: 38.9423076923077%
+
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.1.hinge0.add0.decay0.l1.r1
+---accuracy: 39.6153846153846%
+
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.2.hinge0.add0.decay0.l1.r1
+---accuracy: 40.2884615384615%
+
+---model: wordembed.semSA1.dim600.win5.neg5.samp1e-05.inter0.3.hinge0.add0.decay0.l1.r1
+---accuracy: 39.7115384615385%
+
+>>> Semantic: HH1, RunTimes: 1
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.hinge0.add0.decay0.l1.r1
+---accuracy: 31.3461538461538%
+
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.01.hinge0.add0.decay0.l1.r1
+---accuracy: 32.8846153846154%
+
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.05.hinge0.add0.decay0.l1.r1
+---accuracy: 35.4807692307692%
+
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.1.hinge0.add0.decay0.l1.r1
+---accuracy: 37.0192307692308%
+
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.2.hinge0.add0.decay0.l1.r1
+---accuracy: 38.3653846153846%
+
+---model: wordembed.semHH1.dim600.win5.neg5.samp1e-05.inter0.3.hinge0.add0.decay0.l1.r1
+---accuracy: 40%
+
+>>> Semantic: COM1, RunTimes: 1
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.hinge0.add0.decay0.l1.r1
+---accuracy: 31.7307692307692%
+
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.01.hinge0.add0.decay0.l1.r1
+---accuracy: 35.1923076923077%
+
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.05.hinge0.add0.decay0.l1.r1
+---accuracy: 40%
+
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.1.hinge0.add0.decay0.l1.r1
+---accuracy: 39.6153846153846%
+
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.2.hinge0.add0.decay0.l1.r1
+---accuracy: 41.4423076923077%
+
+---model: wordembed.semCOM1.dim600.win5.neg5.samp1e-05.inter0.3.hinge0.add0.decay0.l1.r1
+---accuracy: 39.5192307692308%
+

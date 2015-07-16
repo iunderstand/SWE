@@ -1,0 +1,156 @@
+
+====== WordSim353
+--- 2015-05-27--18:44:11
+>>> Semantic: SA1  Inter_run: 1 times
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.47105093536331
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.474865421763562
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.478294778964948
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.503436494478428
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.521262154665482
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.52664136838133
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.516022606262303
+
+>>> Semantic: HH1  Inter_run: 1 times
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.462895768599238
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.46832970088949
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.471759617871689
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.487382120726711
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.493922459792485
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.497550539182239
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.504943564370357
+
+>>> Semantic: COM1  Inter_run: 1 times
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.466632165576174
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.475998837963278
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.479125633635613
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.516238681655853
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.541238492733413
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.544919331464727
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.535278366479594
+
+
+====== WordSim353
+--- 2015-05-27--19:03:32
+>>> Semantic: SA1  Inter_run: 1 times
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.47105093536331
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.474865421763562
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.478294778964948
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.503436494478428
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.521262154665482
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.52664136838133
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.516022606262303
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.4.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.514976515869307
+
+---model: wordembed.semSA1.dim100.win5.neg5.samp0.0001.inter0.5.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.511417709355075
+
+>>> Semantic: HH1  Inter_run: 1 times
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.462895768599238
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.46832970088949
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.471759617871689
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.487382120726711
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.493922459792485
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.497550539182239
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.504943564370357
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.4.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.501247331666704
+
+---model: wordembed.semHH1.dim100.win5.neg5.samp0.0001.inter0.5.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.511277064425984
+
+>>> Semantic: COM1  Inter_run: 1 times
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.466632165576174
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.005.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.475998837963278
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.01.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.479125633635613
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.05.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.516238681655853
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.1.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.541238492733413
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.2.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.544919331464727
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.3.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.535278366479594
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.4.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.526302980880292
+
+---model: wordembed.semCOM1.dim100.win5.neg5.samp0.0001.inter0.5.hinge0.add0.decay0.l1.r1
+---calcu: (350/352), spearman: 0.522247508840342
+
