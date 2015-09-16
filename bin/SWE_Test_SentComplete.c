@@ -1392,7 +1392,7 @@ void MicrosoftCompletion()
 		if (word != 0){
 			fprintf(fo, "%s ", word_str);
 			//fprintf(fn, "%s ", word_str);
-			fprintf(fc, "%s ", word_str);
+			//fprintf(fc, "%s ", word_str);
 		}
 		
         if (feof(fi)) break;
