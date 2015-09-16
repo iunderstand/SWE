@@ -14,9 +14,12 @@ The SWE application include
 * Name Entity Recognition
 * Synonym Selection
 
-Quan Liu
 
-E-mail: quanliu@mail.ustc.edu.cn
+[Notice]
 
+Please ensure all the words in your semantic knowledge are included in your training vocabulary!
+
+
+[SWE Toolkit]
 http://home.ustc.edu.cn/~quanliu/
 
